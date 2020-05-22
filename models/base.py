@@ -2,13 +2,12 @@ import tensorflow as tf
 from PIL import Image
 import numpy as np
 
-from utils.extract_vgg_model import extract_vgg_model
-from utils.preprocessing import preprocess_image
-from utils.gram_matrix import get_gram_matrix
+from .extractor import ExtractorModel
+from .utils.image import tensor2image
 
 
 class BaseModel:
-    '''Base Model to perform gradient ascent on an image.'''
+    '''Base Model to perform gradient descent on an image.'''
     def __init__(self, initializer):
         self.image = tf.Variable(initializer)
 
@@ -34,41 +33,8 @@ class BaseModel:
     def fit(self, epochs=1):
         for i in range(epochs):
             self._train_step()
-            print("Epoch: {:4d}/{:4d}".format(i+1, epochs))
+            print("Epoch: {:4d}/{:4d}".format(i+1, epochs), end='\r')
         return self.image
-
-
-class ExtractorModel(tf.keras.Model):
-    def __init__(self, style_layers, content_layers):
-        super(ExtractorModel, self).__init__()
-        self.model = extract_vgg_model(style_layers+content_layers)
-        self.model.trainable = False
-        self.style_layers = style_layers
-        self.content_layers = content_layers
-        self.n_style_layers = len(style_layers)
-        self.n_content_layers = len(content_layers)
-
-    def call(self, input):
-        unscaled_input = input * 255
-        proc_input = preprocess_image(unscaled_input)
-
-        outputs = self.model(proc_input)
-
-        style_outputs, content_outputs = (outputs[:self.n_style_layers],
-                                          outputs[self.n_style_layers:])
-
-        style_outputs = [get_gram_matrix(style_output)
-                         for style_output in style_outputs]
-
-        style_dict = {style_key: style_value
-                      for style_key, style_value in zip(self.style_layers,
-                                                        style_outputs)}
-
-        content_dict = {content_key: content_value
-                      for content_key, content_value in zip(self.content_layers,
-                                                            content_outputs)}
-
-        return {'style': style_dict, 'content': content_dict}
 
 
 class NSTModel(BaseModel):
@@ -118,11 +84,6 @@ class NSTModel(BaseModel):
         optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.compile(self.extractor, optimizer, self.style_content_loss,
                      self.total_variation_regularizer, lambda_)
-        image = self.fit(epochs)
-        image = tf.squeeze(image, axis=0) * 255
-        image = np.array(image, dtype='uint8')
-        print(image.shape)
-        img = Image.fromarray(image)
-        img.show()
+        tensor = self.fit(epochs)
 
-        return img
+        return tensor
