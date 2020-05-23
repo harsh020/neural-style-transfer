@@ -2,11 +2,11 @@ import tensorflow as tf
 import numpy as np
 import regex as re
 
-from model.base import NSTModel
+from model.base import NeuralStyleTransfer
 from utils.io import load_image, save_image
 from utils.image import tensor2image
 
-class NeuralStyleTransfer:
+class Generator:
     def __init__(self, style_path, content_path, style_layers, content_layers):
         self.style_path = style_path
         self.content_path = content_path
@@ -22,7 +22,7 @@ class NeuralStyleTransfer:
         if not content_layers:
             self.content_layers = ['block5_conv2']
 
-    def _fit():
+    def _fit(self):
         url_template = 'http[s]?://([a-zA-Z]|[0-9]|[@#$&\(\)]|[+-=&@!]|[/,.:\"\"])+'
         from_url = False
         if re.match(url_template, self.style_path):
@@ -36,7 +36,7 @@ class NeuralStyleTransfer:
 
         return style_tensor, content_tensor
 
-    def fit(epochs=1000, lambda_=30):
+    def fit(self, epochs=1000, lambda_=30):
         style_tensor, content_tensor = self._fit()
         nst = NSTModel(style_tensor, content_tensor, self.style_layers,
                        self.content_layers)
@@ -44,11 +44,10 @@ class NeuralStyleTransfer:
 
         return tensor
 
-    def transform(tensor, save=False, display=True):
+    def transform(self, tensor, save=False, display=True):
         image = tensor2image(tensor)
         if save:
             save_image(tensor)
         if display:
             image.show()
         return image
-            

@@ -37,7 +37,7 @@ class BaseModel:
         return self.image
 
 
-class NSTModel(BaseModel):
+class NeuralStyleTransfer(BaseModel):
     def __init__(self, style_tensor, content_tensor, style_layers,
                  content_layers, style_weight=1e-2, content_weight=1e2):
         super(NSTModel, self).__init__(content_tensor)
