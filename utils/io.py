@@ -21,7 +21,7 @@ def load_image(name, PATH, from_url=False, low_memory=True):
             else:
                 size[0] = MAX_RES // aspect_ratio
                 size[1] = MAX_RES
-        image = image.resize((*size))
+        image = image.resize(tuple(size))
     array = np.array(image)
     tensor = tf.expand_dims(tf.cast(array, tf.float32), 0)
     tensor = tf.constant(tensor / 255)
