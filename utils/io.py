@@ -21,7 +21,7 @@ def load_image(name, PATH, from_url=False, low_memory=True):
             else:
                 size[0] = MAX_RES // aspect_ratio
                 size[1] = MAX_RES
-        image = image.rescale((*size))
+        image = image.resize((*size))
     array = np.array(image)
     tensor = tf.expand_dims(tf.cast(array, tf.float32), 0)
     tensor = tf.constant(tensor / 255)
@@ -32,6 +32,6 @@ def save_image(tensor, name=None):
     image = tensor2image(tensor)
 
     if not name:
-        name = ""
+        name = 'generated'
     template = "{}_{}.jpg".format(name, time.time())
     image.save(template)
