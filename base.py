@@ -22,7 +22,10 @@ class Generator:
         if not content_layers:
             self.content_layers = ['block5_conv2']
 
+        return self
+
     def _fit(self):
+        '''Load images as tensors from given path.'''
         url_template = 'http[s]?://([a-zA-Z]|[0-9]|[@#$&\(\)]|[+-=&@!]|[/,.:\"\"])+'
         from_url = False
         if re.match(url_template, self.style_path):
@@ -36,7 +39,7 @@ class Generator:
 
         return style_tensor, content_tensor
 
-    def fit(self, epochs=1000, lambda_=30):
+    def fit(self, epochs=1, lr=0.02, lambda_=0):
         style_tensor, content_tensor = self._fit()
         nst = NSTModel(style_tensor, content_tensor, self.style_layers,
                        self.content_layers)
