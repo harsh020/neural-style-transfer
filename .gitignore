@@ -1,4 +1,4 @@
 .DS_Store
-model/__pycache__
+models/__pycache__
 utils/__pycache__
 try.py

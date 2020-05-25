@@ -14,5 +14,8 @@ def preprocess_image(tensor):
     return tensor
 
 def tensor2image(tensor):
-    img = Image.fromarray(tensor.numpy())
-    return img
+    if len(tf.shape(tensor)) > 3:
+        tensor = tf.squeeze(tensor, axis=0)
+    image = np.array(tensor, dtype='uint8') * 255
+    image = Image.fromarray(image)
+    return image
