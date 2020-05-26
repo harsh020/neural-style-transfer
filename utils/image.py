@@ -29,7 +29,7 @@ def preprocess_image(tensor):
     tensor = tf.clip_by_value(tensor, 0, 255)
     return tensor
 
-def tensor2image(tensor):
+def tensor2image(tensor, rescale=255):
     """
     Function to convert tensor to image.
 
@@ -44,6 +44,6 @@ def tensor2image(tensor):
     """
     if len(tf.shape(tensor)) > 3:
         tensor = tf.squeeze(tensor, axis=0)
-    image = np.array(tensor, dtype='uint8') * 255
+    image = np.array(tensor, dtype='uint8') * rescale
     image = Image.fromarray(image)
     return image
