@@ -7,7 +7,7 @@ from .utils.image import tensor2image
 
 
 class BaseModel:
-    '''Base Model to perform gradient descent on an image.'''
+    """Base Model to perform gradient descent."""
     def __init__(self, initializer):
         self.image = tf.Variable(initializer)
 
@@ -21,6 +21,7 @@ class BaseModel:
 
     @tf.function
     def _train_step(self):
+        """Perform one gradient descent step."""
         with tf.GradientTape() as tape:
             outputs = self.model(self.image)
             loss = self.loss(outputs)
@@ -31,13 +32,86 @@ class BaseModel:
         self.image.assign(tf.clip_by_value(self.image, 0, 1))
 
     def fit(self, epochs=1):
+        """Fit `NeuralStyleTransfer` model.
+
+        Parameters
+        ----------
+        epochs : int. Number of epochs to train for.
+
+        Returns
+        -------
+        image : {tensor}, shape (1, None, None, 3)
+                float, Transformed tensor of input image, after
+                entire training.
+        """
         for i in range(epochs):
             self._train_step()
             print("Epoch: {:4d}/{:4d}".format(i+1, epochs), end='\r')
         return self.image
 
 
-class NeuralStyleTransfer(BaseModel):
+class NeuralStyleTransfer(BaseModel, tf.keras.Model):
+    """Model to perform Neural Style Transfer.
+
+    Inherits
+    --------
+    BaseModel : BaseModel to perform gradient descent.
+    tf.keras.Model : Tensorflow.Keras.Model class.
+
+    Parameters
+    ----------
+    style_path : string
+                 Path of style image. Either on disk or a URL.
+
+    content_path : string
+                   Path of content image. Either on disk or a URL.
+
+    style_layers : {array-like}, shape (None, )
+                   string, Names of layers of `VGG19` which model should
+                   use to extract style image.
+
+    content_layers : {array-like}, shape (None, )
+                     string, Names of layers of `VGG19` which model should
+                     use to extract content image.
+
+    style_weight : float
+                   Coefficient of loss from style image.
+
+    content_weight : float
+                     Coefficient of loss from content image.
+
+    Attribures
+    ----------
+    style_path : string
+                 Path of style image. Either on disk or a URL.
+
+    content_path : string
+                   Path of content image. Either on disk or a URL.
+
+    style_layers : {array-like}, shape (None, )
+                   string, Names of layers of `VGG19` which model should
+                   use to extract style image.
+
+    content_layers : {array-like}, shape (None, )
+                     string, Names of layers of `VGG19` which model should
+                     use to extract content image.
+
+    n_style : float
+              Number of layers in style image.
+
+    n_content : float
+                Number of layers in content image.
+
+    style_weight : float
+                   Coefficient of loss from style image.
+
+    content_weight : float
+                     Coefficient of loss from content image.
+
+    Returns
+    -------
+    self : object.
+    """
     def __init__(self, style_tensor, content_tensor, style_layers,
                  content_layers, style_weight=1e-2, content_weight=1e2):
         super(NSTModel, self).__init__(content_tensor)
@@ -53,7 +127,10 @@ class NeuralStyleTransfer(BaseModel):
         self.style_weight = style_weight
         self.content_weight = content_weight
 
+        return self
+
     def _style_loss(self, style_outputs):
+        """Function to calculate loss from style activations."""
         style_loss = tf.add_n([tf.reduce_mean((style_outputs[name] - self.style_targets[name])**2)
                                               for name in style_outputs.keys()])
         style_loss = style_loss * self.style_weight / self.n_style
@@ -61,6 +138,7 @@ class NeuralStyleTransfer(BaseModel):
         return style_loss
 
     def _content_loss(self, content_outputs):
+        """Function to calculate loss from content activations."""
         content_loss = tf.add_n([tf.reduce_mean((content_outputs[name] - self.content_targets[name])**2)
                                               for name in content_outputs.keys()])
         content_loss = content_loss * self.content_weight / self.n_content
@@ -68,6 +146,18 @@ class NeuralStyleTransfer(BaseModel):
         return content_loss
 
     def style_content_loss(self, outputs):
+        """Function to calculate total loss.
+
+        Parameters
+        ----------
+        outputs : {array-like}, shape (None, )
+                  Outputs of the custom `VGG19` extraction model.
+
+        Returns
+        -------
+        loss : float
+               Total loss for a given output.
+        """
         style_loss = self._style_loss(outputs['style'])
         content_loss = self._content_loss(outputs['content'])
 
@@ -76,11 +166,23 @@ class NeuralStyleTransfer(BaseModel):
         return loss
 
     def total_variation_regularizer(self, tensor, beta=1.2):
+        """Calculate Total Variation Regularization value."""
         reg = (tf.reduce_sum((tensor[:,:,1:,:] - tensor[:,:,:-1,:])**2) +
                tf.reduce_sum((tensor[:,1:,:,:] - tensor[:,:-1,:,:])**2))**(beta/2.)
         return reg
 
     def generate(self, lr=0.02, epochs=1, lambda_=0):
+        """Generate style transfer image.
+
+        lr : float
+             Step size.
+
+        epochs : int
+                 Number of epochs to train for.
+
+        lambda_ : float
+                  Coefficent for total variational regularizer.
+        """
         optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
         self.compile(self.extractor, optimizer, self.style_content_loss,
                      self.total_variation_regularizer, lambda_)

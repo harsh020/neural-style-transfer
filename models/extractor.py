@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from utils.extract_vgg_model import extract_vgg_model
+from utils.extract_vgg_model import extract_vgg
 from utils.gram_matrix import get_gram_matrix
 from utils.image import preprocess_image
 
@@ -9,7 +9,7 @@ from utils.image import preprocess_image
 class ExtractorModel(tf.keras.Model):
     def __init__(self, style_layers, content_layers):
         super(ExtractorModel, self).__init__()
-        self.model = extract_vgg_model(style_layers+content_layers)
+        self.model = extract_vgg(style_layers+content_layers)
         self.model.trainable = False
         self.style_layers = style_layers
         self.content_layers = content_layers
