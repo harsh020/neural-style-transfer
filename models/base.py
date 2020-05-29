@@ -3,12 +3,13 @@ from PIL import Image
 import numpy as np
 
 from .extractor import ExtractorModel
-from .utils.image import tensor2image
+from ..utils.image import tensor2image
 
 
 class BaseModel:
     """Base Model to perform gradient descent."""
     def __init__(self, initializer):
+        # super(BaseModel, self).__init__()
         self.image = tf.Variable(initializer)
 
     def compile(self, model=None, optimizer=None, loss=None,
@@ -50,7 +51,7 @@ class BaseModel:
         return self.image
 
 
-class NeuralStyleTransfer(BaseModel, tf.keras.Model):
+class NeuralStyleTransfer(BaseModel):
     """Model to perform Neural Style Transfer.
 
     Inherits
@@ -74,14 +75,17 @@ class NeuralStyleTransfer(BaseModel, tf.keras.Model):
                      string, Names of layers of `VGG19` which model should
                      use to extract content image.
 
-    style_weight : float
+    style_weight : float, default=1e-2
                    Coefficient of loss from style image.
 
-    content_weight : float
+    content_weight : float, default=1e4
                      Coefficient of loss from content image.
 
     Attribures
     ----------
+    extractor : object
+                `VGG19` custom model to extract symantic image information.
+
     style_path : string
                  Path of style image. Either on disk or a URL.
 
@@ -113,8 +117,8 @@ class NeuralStyleTransfer(BaseModel, tf.keras.Model):
     self : object.
     """
     def __init__(self, style_tensor, content_tensor, style_layers,
-                 content_layers, style_weight=1e-2, content_weight=1e2):
-        super(NSTModel, self).__init__(content_tensor)
+                 content_layers, style_weight=1e-2, content_weight=1e4):
+        super(NeuralStyleTransfer, self).__init__(initializer=content_tensor)
         self.extractor = ExtractorModel(style_layers, content_layers)
         outputs = self.extractor(style_tensor)
         self.style_targets = outputs['style']
@@ -126,8 +130,6 @@ class NeuralStyleTransfer(BaseModel, tf.keras.Model):
 
         self.style_weight = style_weight
         self.content_weight = content_weight
-
-        return self
 
     def _style_loss(self, style_outputs):
         """Function to calculate loss from style activations."""
