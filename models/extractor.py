@@ -1,9 +1,9 @@
 import tensorflow as tf
 import numpy as np
 
-from utils.extract_vgg_model import extract_vgg
-from utils.gram_matrix import get_gram_matrix
-from utils.image import preprocess_image
+from ..utils.extract_vgg import extract_vgg
+from ..utils.gram_matrix import get_gram_matrix
+from ..utils.image import preprocess_image, tensor2image
 
 
 class ExtractorModel(tf.keras.Model):
@@ -17,7 +17,7 @@ class ExtractorModel(tf.keras.Model):
         self.n_content_layers = len(content_layers)
 
     def call(self, input):
-        unscaled_input = input * 255
+        unscaled_input = input * 255.0
         proc_input = preprocess_image(unscaled_input)
 
         outputs = self.model(proc_input)

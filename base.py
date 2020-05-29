@@ -2,9 +2,9 @@ import tensorflow as tf
 import numpy as np
 import regex as re
 
-from model.base import NeuralStyleTransfer
-from utils.io import load_image, save_image
-from utils.image import tensor2image
+from .models.base import NeuralStyleTransfer
+from .utils.io import load_image, save_image
+from .utils.image import tensor2image
 
 class Generator:
     """Class to perfrom Neural Style Transfer. Runs on top of
@@ -19,11 +19,11 @@ class Generator:
     content_path : string
                    Path of content image. Either on disk or a URL.
 
-    style_layers : {array-like}, shape (None, )
+    style_layers : {array-like}, shape (None, ), default=None
                    string, Names of layers of `VGG19` which model should
                    use to extract style image.
 
-    content_layers : {array-like}, shape (None, )
+    content_layers : {array-like}, shape (None, ), default=None
                      string, Names of layers of `VGG19` which model should
                      use to extract content image.
 
@@ -45,9 +45,10 @@ class Generator:
 
     Returns
     -------
-    self : object.
+    None.
     """
-    def __init__(self, style_path, content_path, style_layers, content_layers):
+    def __init__(self, style_path, content_path, style_layers=None,
+                 content_layers=None):
         self.style_path = style_path
         self.content_path = content_path
 
@@ -62,20 +63,18 @@ class Generator:
         if not content_layers:
             self.content_layers = ['block5_conv2']
 
-        return self
-
     def _fit(self):
         """Load images as tensors from given path."""
         url_template = r'http[s]?://([a-zA-Z]|[0-9]|[@#$&\(\)]|[+-=&@!]|[/,.:\"\"])+'
         from_url = False
         if re.match(url_template, self.style_path):
             from_url = True
-        style_tensor = load_image(style_path[0], style_path[1], from_url=from_url)
+        style_tensor = load_image(self.style_path, from_url=from_url)
 
         from_url = False
         if re.match(url_template, self.content_path):
             from_url = True
-        content_tensor = load_image(content_path[0], content_path[1], from_url=from_url)
+        content_tensor = load_image(self.content_path, from_url=from_url)
 
         return style_tensor, content_tensor
 
@@ -99,9 +98,9 @@ class Generator:
                  float, Tensor of dreamt image.
         """
         style_tensor, content_tensor = self._fit()
-        nst = NSTModel(style_tensor, content_tensor, self.style_layers,
-                       self.content_layers)
-        tensor = nst.generate(epochs, lambda_)
+        nst = NeuralStyleTransfer(style_tensor, content_tensor, self.style_layers,
+                                  self.content_layers)
+        tensor = nst.generate(epochs=epochs, lambda_=lambda_)
 
         return tensor
 
