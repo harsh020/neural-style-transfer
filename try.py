@@ -1,1 +1,0 @@
-from neural_style_transfer import Generator
