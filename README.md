@@ -11,7 +11,7 @@ by tensorflow.org
 
 ## How to use
 ```
-from neural_style_transfer as nst
+import neural_style_transfer as nst
 
 gen = nst.Generator('path/to/style/image', 'path/to/content/image')
 tensor = gen.fit()
